@@ -25,8 +25,8 @@ class Settings(BaseSettings):
     relevance_threshold: float = 0.4
 
     # Models
-    scoring_model: str = "claude-haiku-4-5-20250929"
-    synthesis_model: str = "claude-sonnet-4-5-20250514"
+    scoring_model: str = "claude-haiku-4-5-20251001"
+    synthesis_model: str = "claude-sonnet-4-5-20250929"
 
 
 settings = Settings()
