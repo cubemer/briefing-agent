@@ -1,1 +1,5 @@
-0 12 * * * curl -X POST http://localhost:8080/run
+# 5:00 AM Mountain Time
+# MDT (Mar–Nov): UTC-6 → 11:00 UTC
+# MST (Nov–Mar): UTC-7 → 12:00 UTC
+# Update the hour when clocks change (or use a timezone-aware cron)
+0 11 * * * curl -s -X POST http://localhost:8080/run --max-time 30 || echo "Brief trigger failed at $(date)"
