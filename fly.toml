@@ -1,0 +1,35 @@
+app = "morning-brief-agent"
+primary_region = "den"
+
+[build]
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 8080
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [[services.http_checks]]
+    interval = 30000
+    grace_period = "10s"
+    method = "GET"
+    path = "/health"
+    protocol = "http"
+    timeout = 5000
+
+# 5:00am Mountain Time = 12:00 UTC (UTC-7)
+# fly.io machines scheduled via `fly machine run --schedule`
+# or use: fly machine update <id> --schedule "0 12 * * *"
