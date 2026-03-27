@@ -1,0 +1,20 @@
+feeds:
+  - name: Ars Technica (tech/space)
+    url: https://feeds.arstechnica.com/arstechnica/index
+    topics: [ai_ml, space, embedded]
+
+  - name: IEEE Spectrum (embedded/systems)
+    url: https://spectrum.ieee.org/feeds/feed.rss
+    topics: [embedded, ai_ml]
+
+  - name: The Planetary Society
+    url: https://www.planetary.org/articles/rss
+    topics: [space]
+
+  - name: Hacker News (top)
+    url: https://hnrss.org/frontpage
+    topics: [ai_ml, embedded, geopolitics]
+
+  - name: Embedded.fm blog
+    url: https://embedded.fm/blog/rss
+    topics: [embedded]
