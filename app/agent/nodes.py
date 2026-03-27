@@ -40,10 +40,27 @@ class BriefingState(TypedDict):
     route: str
 
 
-def _extract_json(text: str) -> dict:
+def _get_text(content) -> str:
+    """Extract text from LLM response content (may be str or list of blocks)."""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for block in content:
+            if isinstance(block, str):
+                parts.append(block)
+            elif isinstance(block, dict) and block.get("type") == "text":
+                parts.append(block["text"])
+            elif hasattr(block, "text"):
+                parts.append(block.text)
+        return "\n".join(parts)
+    return str(content)
+
+
+def _extract_json(text) -> dict:
     """Extract JSON from LLM response, handling markdown fences and preamble."""
-    # Try direct parse first
-    text = text.strip()
+    # Handle non-string content (list of content blocks)
+    text = _get_text(text).strip()
     try:
         return json.loads(text)
     except json.JSONDecodeError:
@@ -159,7 +176,9 @@ async def score_filter_node(state: BriefingState) -> dict:
             if story.relevance_score >= settings.relevance_threshold:
                 scored.append(story)
         except Exception as e:
-            logger.error("Scoring failed for '%s': %s", story.title, e)
+            raw = getattr(response, 'content', None) if 'response' in dir() else None
+            logger.error("Scoring failed for '%s': %s | raw content type=%s preview=%s",
+                         story.title, e, type(raw).__name__, repr(raw)[:200] if raw else "N/A")
 
     # Sort by relevance descending
     scored.sort(key=lambda s: s.relevance_score, reverse=True)
