@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import operator
+import re
 from datetime import datetime, timezone
 from typing import Annotated, TypedDict
 
@@ -37,6 +38,34 @@ class BriefingState(TypedDict):
     expanded_queries: list[str]
     errors: Annotated[list[str], operator.add]
     route: str
+
+
+def _extract_json(text: str) -> dict:
+    """Extract JSON from LLM response, handling markdown fences and preamble."""
+    # Try direct parse first
+    text = text.strip()
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    # Try extracting from markdown code fences
+    match = re.search(r"```(?:json)?\s*\n?(.*?)\n?```", text, re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group(1).strip())
+        except json.JSONDecodeError:
+            pass
+
+    # Try finding first { ... } block
+    match = re.search(r"\{.*\}", text, re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group(0))
+        except json.JSONDecodeError:
+            pass
+
+    raise ValueError(f"Could not extract JSON from: {text[:200]}")
 
 
 def _get_haiku() -> ChatAnthropic:
@@ -123,7 +152,7 @@ async def score_filter_node(state: BriefingState) -> dict:
             response = await llm.ainvoke(
                 [SystemMessage(content="Return only valid JSON."), HumanMessage(content=prompt)]
             )
-            data = json.loads(response.content)
+            data = _extract_json(response.content)
             story.topic_scores = data.get("topic_scores", {})
             story.relevance_score = float(data.get("relevance_score", 0.0))
 
@@ -210,7 +239,7 @@ async def summarize_node(state: BriefingState) -> dict:
             response = await llm.ainvoke(
                 [SystemMessage(content="Return only valid JSON."), HumanMessage(content=prompt)]
             )
-            data = json.loads(response.content)
+            data = _extract_json(response.content)
             # Find the primary topic for this story
             primary_topic = max(
                 story.topic_scores, key=story.topic_scores.get, default=""
